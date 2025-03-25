@@ -18,12 +18,6 @@ This project is an automated trading assistant that:
 
 ---
 
-## 1-Click Deploy to Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/YOUR_GITHUB_USERNAME/ai-news-alert-bot)
-
----
-
 ## Environment Variables (`.env`)
 
 ```
