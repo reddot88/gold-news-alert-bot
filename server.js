@@ -73,11 +73,10 @@ app.post('/news', async (req, res) => {
 
     const analysis = await analyzeWithChatGPT(content);
     const mas = await getMarketMetrics(); // ✅ Fully working now
-
     const message = formatTelegramMessage(title, analysis, mas);
+    
     await sendToTelegram(message);
     console.log("📬 Sent to Telegram");
-
     res.status(200).send('✅ Alert processed and sent to Telegram');
   } catch (err) {
     console.error('❌ Error processing /news alert:', err.message);
