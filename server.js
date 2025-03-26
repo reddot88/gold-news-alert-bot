@@ -34,13 +34,13 @@ async function analyzeWithChatGPT(newsText) {
   return response.data.choices[0].message.content.trim();
 }
 
-async function getMovingAverages() {
-  // Dummy values for now
-  return {
-    ma50: 3005,
-    ma200: 2960,
-    currentPrice: 3020,
-  };
+async function getMarketMetrics() {
+  const metrics = await getMarketMetrics();
+  
+  console.log("MA50:", metrics.ma50);
+  console.log("RSI:", metrics.rsi);
+  console.log("USD Strength:", metrics.usdStrength);
+
 }
 
 function formatTelegramMessage(title, analysis, mas) {
