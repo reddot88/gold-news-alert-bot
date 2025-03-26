@@ -7,14 +7,15 @@ async function getMarketMetrics() {
     const url = `https://api.metalpriceapi.com/v1/latest?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU`;
     const response = await axios.get(url);
 
-    const currentPrice = response.data?.rates?.XAU || null;
+    const rate = response.data?.rates?.XAU;
+    const xauInUsd = rate ? 1 / rate : null;
 
     return {
       ma50: null,           // Not available on MetalpriceAPI
       ma200: null,          // Not available on MetalpriceAPI
       rsi: null,            // Not available on MetalpriceAPI
       usdStrength: 'unknown', // Not provided
-      currentPrice
+      currentPrice: xauInUsd
     };
   } catch (err) {
     console.error("❌ Error fetching metrics:", err.message);
