@@ -3,7 +3,6 @@
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
-const TWELVE_API_KEY = process.env.TWELVE_API_KEY;
 require('dotenv').config();
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
