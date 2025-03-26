@@ -66,7 +66,7 @@ app.post('/news', async (req, res) => {
     console.log(`📥 News received: ${title}`);
 
     const analysis = await analyzeWithChatGPT(content);
-    const mas = await getMovingAverages();
+    const mas = await getMarketMetrics();
     const message = formatTelegramMessage(title, analysis, mas);
 
     await sendToTelegram(message);
