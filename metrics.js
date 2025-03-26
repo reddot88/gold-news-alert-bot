@@ -1,4 +1,3 @@
-// metrics.js
 const axios = require("axios");
 const ALPHA_KEY = process.env.ALPHA_VANTAGE_KEY;
 
@@ -14,16 +13,31 @@ async function getMarketMetrics() {
       axios.get(`${base}?function=GLOBAL_QUOTE&symbol=XAUUSD&apikey=${ALPHA_KEY}`)
     ]);
 
-    const extractLastValue = (series) => {
-      const keys = Object.keys(series);
-      return parseFloat(series[keys[0]]);
+    // Debug logs
+    console.log("MA50:", ma50Res.data);
+    console.log("MA200:", ma200Res.data);
+    console.log("RSI:", rsiRes.data);
+    console.log("DXY:", dxyRes.data);
+    console.log("Price:", priceRes.data);
+
+    const getLastValue = (obj, key) => {
+      if (!obj || !obj[key]) return null;
+      const latest = Object.values(obj[key])[0];
+      return latest && latest["SMA"] ? parseFloat(latest["SMA"]) : null;
     };
 
-    const ma50 = extractLastValue(ma50Res.data["Technical Analysis: SMA"]);
-    const ma200 = extractLastValue(ma200Res.data["Technical Analysis: SMA"]);
-    const rsi = extractLastValue(rsiRes.data["Technical Analysis: RSI"]);
-    const dxy = parseFloat(dxyRes.data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
-    const currentPrice = parseFloat(priceRes.data["Global Quote"]["05. price"]);
+    const getRSI = (obj) => {
+      if (!obj || !obj["Technical Analysis: RSI"]) return null;
+      const latest = Object.values(obj["Technical Analysis: RSI"])[0];
+      return latest && latest["RSI"] ? parseFloat(latest["RSI"]) : null;
+    };
+
+    const ma50 = getLastValue(ma50Res.data, "Technical Analysis: SMA");
+    const ma200 = getLastValue(ma200Res.data, "Technical Analysis: SMA");
+    const rsi = getRSI(rsiRes.data);
+
+    const dxy = parseFloat(dxyRes?.data?.["Realtime Currency Exchange Rate"]?.["5. Exchange Rate"]) || null;
+    const currentPrice = parseFloat(priceRes?.data?.["Global Quote"]?.["05. price"]) || null;
 
     let usdStrength = "neutral";
     if (dxy > 0.93) usdStrength = "strong";
