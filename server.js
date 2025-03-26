@@ -3,6 +3,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const { getMarketMetrics } = require('./metrics');
+
 require('dotenv').config();
 
 const app = express();
