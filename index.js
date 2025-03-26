@@ -1,4 +1,4 @@
-// ai-news-alert-bot/index.js (RSS Scraper + Webhook Sender)
+// ai-news-alert-bot/index.js
 
 const axios = require('axios');
 const xml2js = require('xml2js');
@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
-let lastPostedTitle = '';
+const recentTitles = new Set(); // ✅ Track duplicates
 
 async function fetchFXStreetRSS() {
   try {
@@ -22,7 +22,7 @@ async function fetchFXStreetRSS() {
       return;
     }
 
-    const topItems = items.slice(0, 5); // top 5 articles
+    const topItems = items.slice(0, 5); // ✅ check top 5 only
 
     for (const item of topItems) {
       const title = item.title[0];
@@ -31,7 +31,10 @@ async function fetchFXStreetRSS() {
       console.log(`🔍 Title: ${title}`);
       console.log(`🔍 Content: ${content}`);
 
-      if (!title || title === lastPostedTitle) continue;
+      if (!title || recentTitles.has(title)) {
+        console.log("⏩ Already processed, skipping...");
+        continue;
+      }
 
       const isRelevant = KEYWORDS.some(keyword =>
         (title + content).toLowerCase().includes(keyword)
@@ -43,9 +46,15 @@ async function fetchFXStreetRSS() {
         await axios.post(WEBHOOK_URL, { title, content }).catch(err => {
           console.error("❌ Failed to send to webhook:", err.message);
         });
-        lastPostedTitle = title;
+
+        recentTitles.add(title); // ✅ Add to memory
+        if (recentTitles.size > 10) {
+          const first = recentTitles.values().next().value;
+          recentTitles.delete(first); // Keep it small
+        }
+
         console.log("📬 News sent to Telegram webhook!");
-        break;
+        break; // ✅ Only send 1 relevant news per cycle
       } else {
         console.log("❌ Not relevant, skipped.");
       }
@@ -55,6 +64,8 @@ async function fetchFXStreetRSS() {
   }
 }
 
+// ⏱ Run every 5 minutes
 cron.schedule('*/5 * * * *', fetchFXStreetRSS);
 fetchFXStreetRSS();
+
 console.log('🤖 RSS-based news alert bot is running...');
