@@ -5,13 +5,13 @@ async function getMarketMetrics() {
   try {
     const base = "https://www.alphavantage.co/query";
 
-    const [ma50Res, ma200Res, rsiRes, dxyRes, priceRes] = await Promise.all([
-      axios.get(`${base}?function=SMA&symbol=XAUUSD&interval=60min&time_period=50&series_type=close&apikey=${ALPHA_KEY}`),
-      axios.get(`${base}?function=SMA&symbol=XAUUSD&interval=60min&time_period=200&series_type=close&apikey=${ALPHA_KEY}`),
-      axios.get(`${base}?function=RSI&symbol=XAUUSD&interval=60min&time_period=14&series_type=close&apikey=${ALPHA_KEY}`),
-      axios.get(`${base}?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=EUR&apikey=${ALPHA_KEY}`),
-      axios.get(`${base}?function=GLOBAL_QUOTE&symbol=XAUUSD&apikey=${ALPHA_KEY}`)
-    ]);
+  const [ma50Res, ma200Res, rsiRes, dxyRes, priceRes] = await Promise.all([
+    axios.get(`${base}?function=SMA&from_symbol=XAU&to_symbol=USD&interval=60min&time_period=50&series_type=close&apikey=${ALPHA_KEY}`),
+    axios.get(`${base}?function=SMA&from_symbol=XAU&to_symbol=USD&interval=60min&time_period=200&series_type=close&apikey=${ALPHA_KEY}`),
+    axios.get(`${base}?function=RSI&from_symbol=XAU&to_symbol=USD&interval=60min&time_period=14&series_type=close&apikey=${ALPHA_KEY}`),
+    axios.get(`${base}?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=EUR&apikey=${ALPHA_KEY}`),
+    axios.get(`${base}?function=GLOBAL_QUOTE&symbol=XAUUSD&apikey=${ALPHA_KEY}`)
+  ]);
 
     // Debug logs
     console.log("MA50:", ma50Res.data);
@@ -20,20 +20,22 @@ async function getMarketMetrics() {
     console.log("DXY:", dxyRes.data);
     console.log("Price:", priceRes.data);
 
-    const getLastValue = (obj, key) => {
-      if (!obj || !obj[key]) return null;
-      const latest = Object.values(obj[key])[0];
-      return latest && latest["SMA"] ? parseFloat(latest["SMA"]) : null;
+    const getSMA = (data) => {
+      const series = data["Technical Analysis: SMA"];
+      if (!series) return null;
+      const latest = Object.values(series)[0];
+      return parseFloat(latest["SMA"]);
     };
-
-    const getRSI = (obj) => {
-      if (!obj || !obj["Technical Analysis: RSI"]) return null;
-      const latest = Object.values(obj["Technical Analysis: RSI"])[0];
-      return latest && latest["RSI"] ? parseFloat(latest["RSI"]) : null;
+    
+    const getRSI = (data) => {
+      const series = data["Technical Analysis: RSI"];
+      if (!series) return null;
+      const latest = Object.values(series)[0];
+      return parseFloat(latest["RSI"]);
     };
-
-    const ma50 = getLastValue(ma50Res.data, "Technical Analysis: SMA");
-    const ma200 = getLastValue(ma200Res.data, "Technical Analysis: SMA");
+    
+    const ma50 = getSMA(ma50Res.data);
+    const ma200 = getSMA(ma200Res.data);
     const rsi = getRSI(rsiRes.data);
 
     const dxy = parseFloat(dxyRes?.data?.["Realtime Currency Exchange Rate"]?.["5. Exchange Rate"]) || null;
