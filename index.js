@@ -3,6 +3,7 @@
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
+const TWELVE_API_KEY = process.env.TWELVE_API_KEY;
 require('dotenv').config();
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
@@ -52,6 +53,35 @@ async function fetchFXStreetRSS() {
     }
   } catch (err) {
     console.error('❌ Error scraping FXStreet RSS:', err.message);
+  }
+}
+
+async function getMarketMetrics() {
+  try {
+    const baseUrl = "https://api.twelvedata.com";
+
+    // Fetch MA
+    const [ma50Res, ma200Res, rsiRes, dxyRes] = await Promise.all([
+      axios.get(`${baseUrl}/ma?symbol=XAU/USD&interval=1h&time_period=50&apikey=${TWELVE_API_KEY}`),
+      axios.get(`${baseUrl}/ma?symbol=XAU/USD&interval=1h&time_period=200&apikey=${TWELVE_API_KEY}`),
+      axios.get(`${baseUrl}/rsi?symbol=XAU/USD&interval=1h&time_period=14&apikey=${TWELVE_API_KEY}`),
+      axios.get(`${baseUrl}/quote?symbol=DXY&apikey=${TWELVE_API_KEY}`),
+    ]);
+
+    const ma50 = parseFloat(ma50Res.data.value);
+    const ma200 = parseFloat(ma200Res.data.value);
+    const rsi = parseFloat(rsiRes.data.value);
+    const dxy = parseFloat(dxyRes.data.close);
+
+    // USD Strength logic (basic)
+    let usdStrength = "neutral";
+    if (dxy > 105) usdStrength = "strong";
+    else if (dxy < 103) usdStrength = "weak";
+
+    return { ma50, ma200, rsi, usdStrength };
+  } catch (err) {
+    console.error("❌ Error fetching metrics:", err.message);
+    return { ma50: null, ma200: null, rsi: null, usdStrength: "unknown" };
   }
 }
 
