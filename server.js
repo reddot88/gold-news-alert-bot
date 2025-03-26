@@ -34,15 +34,6 @@ async function analyzeWithChatGPT(newsText) {
   return response.data.choices[0].message.content.trim();
 }
 
-async function getMarketMetrics() {
-  const metrics = await getMarketMetrics();
-  
-  console.log("MA50:", metrics.ma50);
-  console.log("RSI:", metrics.rsi);
-  console.log("USD Strength:", metrics.usdStrength);
-
-}
-
 function formatTelegramMessage(title, analysis, mas) {
   const structure = mas.currentPrice > mas.ma50 && mas.currentPrice > mas.ma200
     ? '📈 Above both MAs (bullish)'
