@@ -3,7 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const { getMarketMetrics } = require('./metrics');
+const { getMarketMetrics } = require('./metrics'); // ✅ External file to avoid recursion
 
 require('dotenv').config();
 
@@ -16,7 +16,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function analyzeWithChatGPT(newsText) {
-  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and how it might affect gold prices:\n\"\"\"${newsText}\"\"\"\nThen summarize in 2–3 bullet points.`;
+  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and how it might affect gold prices:\n"""${newsText}"""\nThen summarize in 2–3 bullet points.`;
 
   const response = await axios.post(
     'https://api.openai.com/v1/chat/completions',
@@ -41,7 +41,20 @@ function formatTelegramMessage(title, analysis, mas) {
     ? '📈 Above both MAs (bullish)'
     : '📉 Below or between MAs';
 
-  return `📰 *High Impact News Triggered!*\n\n*Headline:* ${title}\n\n*Analysis:*\n${analysis}\n\n*MA Levels (XAU/USD):*\n- 50 MA: $${mas.ma50}\n- 200 MA: $${mas.ma200}\n- Current Price: $${mas.currentPrice}\n- Structure: ${structure}`;
+  return `📰 *High Impact News Triggered!*
+
+*Headline:* ${title}
+
+*Analysis:*
+${analysis}
+
+*Market Metrics (XAU/USD):*
+- 50 MA: $${mas.ma50}
+- 200 MA: $${mas.ma200}
+- RSI: ${mas.rsi}
+- DXY Strength: ${mas.usdStrength}
+- Current Price: $${mas.currentPrice}
+- Structure: ${structure}`;
 }
 
 async function sendToTelegram(message) {
@@ -59,11 +72,12 @@ app.post('/news', async (req, res) => {
     console.log(`📥 News received: ${title}`);
 
     const analysis = await analyzeWithChatGPT(content);
-    const mas = await getMarketMetrics();
-    const message = formatTelegramMessage(title, analysis, mas);
+    const mas = await getMarketMetrics(); // ✅ Fully working now
 
+    const message = formatTelegramMessage(title, analysis, mas);
     await sendToTelegram(message);
     console.log("📬 Sent to Telegram");
+
     res.status(200).send('✅ Alert processed and sent to Telegram');
   } catch (err) {
     console.error('❌ Error processing /news alert:', err.message);
