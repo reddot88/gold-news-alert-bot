@@ -82,7 +82,15 @@ Consider looking for BUY setups on confirmation.`;
       await sendTelegramMessage(msg);
       console.log('Pullback signal sent.');
     } else {
-      console.log('No pullback signal.');
+      const msg = `**No Pullback Signal**
+        Price: $${current.close.toFixed(2)}
+        RSI: ${rsi.toFixed(2)}
+        MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
+        Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
+        
+        Status: Market not in ideal buy zone yet.`;
+              await sendTelegramMessage(msg);
+              console.log('No signal — status update sent.');
     }
   } catch (err) {
     console.error('Error checking pullback:', err.message);
