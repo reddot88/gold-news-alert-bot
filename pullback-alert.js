@@ -83,6 +83,7 @@ async function checkPullbackSignal() {
     );
 
     if (isTestMode || isValidSignal) {
+      console.log('🚀 Sending test alert to Telegram...');
       const msg = `**Gold Pullback Signal**
 WIB Time: ${wibTime}
 Price: $${current.close.toFixed(2)}
