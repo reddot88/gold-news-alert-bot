@@ -83,7 +83,6 @@ async function checkPullbackSignal() {
     );
 
     if (isTestMode || isValidSignal) {
-      console.log('🚀 Sending test alert to Telegram...');
       const msg = `**Gold Pullback Signal**
 WIB Time: ${wibTime}
 Price: $${current.close.toFixed(2)}
@@ -93,6 +92,7 @@ Candle: Bullish ✅
 ${isTestMode ? '⚠️ *Test Mode Triggered*' : ''}
 
 Consider looking for BUY setups on confirmation.`;
+      console.log('🚀 Sending test alert to Telegram...');
       await sendToTelegram(msg);
       console.log('Pullback signal sent.');
     } else {
