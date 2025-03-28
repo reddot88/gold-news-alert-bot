@@ -1,10 +1,3 @@
-// pullback-alert.js
-function getWIBTime() {
-  const now = new Date();
-  const utc7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-  return utc7.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-}
-
 const axios = require('axios');
 const { sendTelegramMessage } = require('./services/telegram');
 const ALPHA_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -17,6 +10,13 @@ const MA_ZONE = {
   min: 3055,
   max: 3070,
 };
+
+// Convert to WIB (UTC+7)
+function getWIBTime() {
+  const now = new Date();
+  const utc7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return utc7.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+}
 
 async function getAlphaData() {
   const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${SYMBOL}&interval=${INTERVAL}&outputsize=compact&apikey=${ALPHA_KEY}`;
@@ -71,6 +71,7 @@ async function checkPullbackSignal() {
     const ma50 = calculateMA(candles, 50);
     const ma200 = calculateMA(candles, 200);
     const rsi = calculateRSI(candles, RSI_PERIOD);
+    const wibTime = getWIBTime();
 
     if (
       inPullbackZone(current.close) &&
@@ -79,6 +80,7 @@ async function checkPullbackSignal() {
       isBullishCandle(current)
     ) {
       const msg = `**Gold Pullback Signal**
+WIB Time: ${wibTime}
 Price: $${current.close.toFixed(2)}
 RSI: ${rsi.toFixed(2)}
 MA50: ${ma50.toFixed(2)} > MA200: ${ma200.toFixed(2)}
@@ -89,14 +91,15 @@ Consider looking for BUY setups on confirmation.`;
       console.log('Pullback signal sent.');
     } else {
       const msg = `**No Pullback Signal**
-        Price: $${current.close.toFixed(2)}
-        RSI: ${rsi.toFixed(2)}
-        MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
-        Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
-        
-        Status: Market not in ideal buy zone yet.`;
-              await sendTelegramMessage(msg);
-              console.log('No signal — status update sent.');
+WIB Time: ${wibTime}
+Price: $${current.close.toFixed(2)}
+RSI: ${rsi.toFixed(2)}
+MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
+Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
+
+Status: Market not in ideal buy zone yet.`;
+      await sendTelegramMessage(msg);
+      console.log('No signal — status update sent.');
     }
   } catch (err) {
     console.error('Error checking pullback:', err.message);
