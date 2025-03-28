@@ -11,6 +11,8 @@ const MA_ZONE = {
   max: 3070,
 };
 
+const isTestMode = process.argv.includes('--test');
+
 // Convert to WIB (UTC+7)
 function getWIBTime() {
   const now = new Date();
@@ -73,18 +75,21 @@ async function checkPullbackSignal() {
     const rsi = calculateRSI(candles, RSI_PERIOD);
     const wibTime = getWIBTime();
 
-    if (
+    const isValidSignal = (
       inPullbackZone(current.close) &&
       rsi >= 50 && rsi <= 60 &&
       ma50 > ma200 &&
       isBullishCandle(current)
-    ) {
+    );
+
+    if (isTestMode || isValidSignal) {
       const msg = `**Gold Pullback Signal**
 WIB Time: ${wibTime}
 Price: $${current.close.toFixed(2)}
 RSI: ${rsi.toFixed(2)}
 MA50: ${ma50.toFixed(2)} > MA200: ${ma200.toFixed(2)}
 Candle: Bullish ✅
+${isTestMode ? '⚠️ *Test Mode Triggered*' : ''}
 
 Consider looking for BUY setups on confirmation.`;
       await sendToTelegram(msg);
