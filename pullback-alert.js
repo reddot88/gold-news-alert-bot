@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { sendTelegramMessage } = require('./services/telegram');
+const { sendToTelegram } = require('./services/telegram');
 const ALPHA_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
 const SYMBOL = 'XAUUSD';
