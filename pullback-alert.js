@@ -1,4 +1,10 @@
 // pullback-alert.js
+function getWIBTime() {
+  const now = new Date();
+  const utc7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return utc7.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+}
+
 const axios = require('axios');
 const { sendTelegramMessage } = require('./services/telegram');
 const ALPHA_KEY = process.env.ALPHA_VANTAGE_API_KEY;
