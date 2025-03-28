@@ -87,7 +87,7 @@ MA50: ${ma50.toFixed(2)} > MA200: ${ma200.toFixed(2)}
 Candle: Bullish ✅
 
 Consider looking for BUY setups on confirmation.`;
-      await sendTelegramMessage(msg);
+      await sendToTelegram(msg);
       console.log('Pullback signal sent.');
     } else {
       const msg = `**No Pullback Signal**
@@ -98,7 +98,7 @@ MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
 Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
 
 Status: Market not in ideal buy zone yet.`;
-      await sendTelegramMessage(msg);
+      await sendToTelegram(msg);
       console.log('No signal — status update sent.');
     }
   } catch (err) {
