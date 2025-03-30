@@ -113,3 +113,15 @@ Status: Market not in ideal buy zone yet.`;
 }
 
 module.exports = { checkPullbackSignal };
+
+const cron = require('node-cron');
+
+// Run on startup
+checkPullbackSignal();
+
+// Run every 60 minutes
+cron.schedule('*/60 * * * *', () => {
+  console.log('🔄 Checking gold pullback alert...');
+  checkPullbackSignal();
+});
+
