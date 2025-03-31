@@ -1,5 +1,4 @@
-// ai-news-alert-bot/server.js (Telegram & ChatGPT Webhook Processor)
-
+// server.js (Telegram + ChatGPT Webhook Processor)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -15,7 +14,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function analyzeWithChatGPT(newsText) {
-  const prompt = `Summarize the following news into a short monetary policy tone (hawkish/dovish/neutral), and give 1-line prediction for gold price movement (bullish/bearish/neutral):\n\n"""${newsText}"""`;
+  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and how it might affect gold prices. Then summarize the tone and give a prediction for gold price movement (Bullish, Bearish, Neutral).\n\nNews:\n"""${newsText}"""\n\nRespond in this format:\nTone: <hawkish/dovish/neutral>\nPrediction: <Bullish/Bearish/Neutral>`;
 
   const response = await axios.post(
     'https://api.openai.com/v1/chat/completions',
@@ -35,8 +34,8 @@ async function analyzeWithChatGPT(newsText) {
   return response.data.choices[0].message.content.trim();
 }
 
-function formatTelegramMessage(title, analysis, prediction, currentPrice) {
-  return `📰 *High Impact News Triggered!*\n\n*Headline:* ${title}\n\n*Analysis:* ${analysis}\n\n*Prediction:* ${prediction}\n*Current Price:* $${currentPrice}`;
+function formatTelegramMessage(title, analysis, prediction, price) {
+  return `🗞 *High Impact News Triggered!*\n\n*Headline:* ${title}\n\n*Analysis:* Monetary Policy Tone: ${analysis}\n\n*Prediction:* Gold Price Movement Prediction: ${prediction}\n*Current Price:* $${price ? price.toFixed(2) : 'N/A'}`;
 }
 
 async function sendToTelegram(message) {
@@ -53,17 +52,16 @@ app.post('/news', async (req, res) => {
     const { title, content } = req.body;
     console.log(`📥 News received: ${title}`);
 
-    const analysis = await analyzeWithChatGPT(content);
+    const analysisText = await analyzeWithChatGPT(content);
+    const [toneLine, predictionLine] = analysisText.split('\n');
+    const tone = toneLine?.split(':')[1]?.trim() || 'N/A';
+    const prediction = predictionLine?.split(':')[1]?.trim() || 'N/A';
+
     const metrics = await getMarketMetrics();
+    const price = metrics.currentPrice;
 
-    // Extract prediction (assumes last sentence is prediction)
-    const split = analysis.split(/\n|\./);
-    const prediction = split.pop().trim();
-    const summary = split.join(". ").trim();
-
-    const message = formatTelegramMessage(title, summary, prediction, metrics.currentPrice || 'N/A');
+    const message = formatTelegramMessage(title, tone, prediction, price);
     await sendToTelegram(message);
-
     console.log("📬 Sent to Telegram");
     res.status(200).send('✅ Alert processed and sent to Telegram');
   } catch (err) {
