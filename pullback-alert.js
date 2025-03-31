@@ -7,13 +7,12 @@ const INTERVAL = '60min';
 const RSI_PERIOD = 14;
 
 const MA_ZONE = {
-  min: 3055,
-  max: 3070,
+  min: 3020,
+  max: 3035,
 };
 
 const isTestMode = process.argv.includes('--test');
 
-// Convert to WIB (UTC+7)
 function getWIBTime() {
   const now = new Date();
   const utc7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
@@ -53,9 +52,8 @@ function calculateRSI(data, period) {
 
   const avgGain = gains / period;
   const avgLoss = losses / period;
-  const rs = avgGain / avgLoss;
-  const rsi = 100 - 100 / (1 + rs);
-  return rsi;
+  const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
 }
 
 function inPullbackZone(price) {
@@ -70,58 +68,50 @@ async function checkPullbackSignal() {
   try {
     const candles = await getAlphaData();
     const current = candles[candles.length - 1];
+    const previous = candles[candles.length - 2];
     const ma50 = calculateMA(candles, 50);
     const ma200 = calculateMA(candles, 200);
     const rsi = calculateRSI(candles, RSI_PERIOD);
     const wibTime = getWIBTime();
 
+    const bullishEngulfing = current.close > previous.open && current.open < previous.close;
+
     const isValidSignal = (
       inPullbackZone(current.close) &&
-      rsi >= 50 && rsi <= 60 &&
+      rsi >= 50 && rsi <= 65 &&
       ma50 > ma200 &&
-      isBullishCandle(current)
+      (isBullishCandle(current) || bullishEngulfing)
     );
 
     if (isTestMode || isValidSignal) {
-      const msg = `**Gold Pullback Signal**
-WIB Time: ${wibTime}
-Price: $${current.close.toFixed(2)}
-RSI: ${rsi.toFixed(2)}
-MA50: ${ma50.toFixed(2)} > MA200: ${ma200.toFixed(2)}
-Candle: Bullish ✅
+      const msg = `📉 *Gold Pullback Signal Detected!*
+
+🕒 WIB Time: ${wibTime}
+💰 Price: $${current.close.toFixed(2)}
+📈 RSI: ${rsi.toFixed(2)}
+🔁 MA50: ${ma50.toFixed(2)} > MA200: ${ma200.toFixed(2)}
+🕯️ Candle: ${bullishEngulfing ? 'Bullish Engulfing ✅' : 'Bullish ✅'}
 ${isTestMode ? '⚠️ *Test Mode Triggered*' : ''}
 
-Consider looking for BUY setups on confirmation.`;
-      console.log('🚀 Sending test alert to Telegram...');
+🔔 Consider looking for BUY setups.`;
       await sendToTelegram(msg);
-      console.log('Pullback signal sent.');
+      console.log('✅ Pullback signal sent.');
     } else {
-      const msg = `**No Pullback Signal**
-WIB Time: ${wibTime}
-Price: $${current.close.toFixed(2)}
-RSI: ${rsi.toFixed(2)}
-MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
-Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
+      const msg = `❌ *No Pullback Signal Yet*
 
-Status: Market not in ideal buy zone yet.`;
+🕒 WIB Time: ${wibTime}
+💰 Price: $${current.close.toFixed(2)}
+📉 RSI: ${rsi.toFixed(2)}
+📊 MA50: ${ma50.toFixed(2)}, MA200: ${ma200.toFixed(2)}
+🕯️ Candle: ${isBullishCandle(current) ? 'Bullish' : 'Not Bullish'}
+
+Market not in ideal buy zone.`;
       await sendToTelegram(msg);
-      console.log('No signal — status update sent.');
+      console.log('ℹ️ No signal — status update sent.');
     }
   } catch (err) {
-    console.error('Error checking pullback:', err.message);
+    console.error('❌ Error checking pullback:', err.message);
   }
 }
 
 module.exports = { checkPullbackSignal };
-
-const cron = require('node-cron');
-
-// Run on startup
-checkPullbackSignal();
-
-// Run every 60 minutes
-cron.schedule('*/60 * * * *', () => {
-  console.log('🔄 Checking gold pullback alert...');
-  checkPullbackSignal();
-});
-
