@@ -20,9 +20,12 @@ function getWIBTime() {
 }
 
 async function getAlphaData() {
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${SYMBOL}&interval=${INTERVAL}&outputsize=compact&apikey=${ALPHA_KEY}`;
+  const url = `https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=XAU&to_symbol=USD&interval=${INTERVAL}&outputsize=compact&apikey=${ALPHA_KEY}`;
   const response = await axios.get(url);
-  const data = response.data['Time Series (60min)'];
+  const data = response.data['Time Series FX (60min)'];
+
+  if (!data) throw new Error("No data returned. Possible API limit or invalid symbol.");
+
   const candles = Object.entries(data).map(([time, value]) => ({
     time,
     open: parseFloat(value['1. open']),
