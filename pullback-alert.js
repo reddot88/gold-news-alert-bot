@@ -115,3 +115,8 @@ Market not in ideal buy zone.`;
 }
 
 module.exports = { checkPullbackSignal };
+
+if (require.main === module) {
+  checkPullbackSignal();
+}
+
