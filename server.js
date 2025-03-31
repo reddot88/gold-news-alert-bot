@@ -74,8 +74,18 @@ app.post('/news', async (req, res) => {
 
     const ai = await analyzeWithChatGPT(content);
     const lines = ai.split('\n').filter(Boolean);
-    const summary = lines.find(line => line.toLowerCase().startsWith("analysis"))?.replace(/^Analysis:\s*/i, '') || 'N/A';
-    const prediction = lines.find(line => line.toLowerCase().startsWith("prediction"))?.replace(/^Prediction:\s*/i, '') || 'N/A';
+    let summary = 'N/A';
+    let prediction = 'N/A';
+    
+    for (const line of lines) {
+      if (line.toLowerCase().includes('analysis')) {
+        summary = line.replace(/.*analysis[:\-]?\s*/i, '').trim();
+      }
+      if (line.toLowerCase().includes('prediction')) {
+        prediction = line.replace(/.*prediction[:\-]?\s*/i, '').trim();
+      }
+    }
+
 
     const currentPrice = await getGoldPrice();
     const msg = formatTelegramMessage(title, summary, prediction, currentPrice);
