@@ -1,13 +1,24 @@
-// ai-news-alert-bot/index.js
+// ai-news-alert-bot/index.js (RSS Scraper + Webhook Sender with Duplicate Filter)
 
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
+const fs = require('fs');
 require('dotenv').config();
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
-const recentTitles = new Set(); // ✅ Track duplicates
+const POSTED_FILE = './posted.json';
+let postedTitles = [];
+
+// Load posted titles from file (if exists)
+if (fs.existsSync(POSTED_FILE)) {
+  try {
+    postedTitles = JSON.parse(fs.readFileSync(POSTED_FILE, 'utf8'));
+  } catch (err) {
+    console.error('Failed to load posted titles:', err.message);
+  }
+}
 
 async function fetchFXStreetRSS() {
   try {
@@ -22,7 +33,7 @@ async function fetchFXStreetRSS() {
       return;
     }
 
-    const topItems = items.slice(0, 5); // ✅ check top 5 only
+    const topItems = items.slice(0, 5); // top 5 articles
 
     for (const item of topItems) {
       const title = item.title[0];
@@ -31,8 +42,8 @@ async function fetchFXStreetRSS() {
       console.log(`🔍 Title: ${title}`);
       console.log(`🔍 Content: ${content}`);
 
-      if (!title || recentTitles.has(title)) {
-        console.log("⏩ Already processed, skipping...");
+      if (!title || postedTitles.includes(title)) {
+        console.log("⚠️ Duplicate or empty title, skipped.");
         continue;
       }
 
@@ -46,15 +57,10 @@ async function fetchFXStreetRSS() {
         await axios.post(WEBHOOK_URL, { title, content }).catch(err => {
           console.error("❌ Failed to send to webhook:", err.message);
         });
-
-        recentTitles.add(title); // ✅ Add to memory
-        if (recentTitles.size > 10) {
-          const first = recentTitles.values().next().value;
-          recentTitles.delete(first); // Keep it small
-        }
-
+        postedTitles.push(title);
+        fs.writeFileSync(POSTED_FILE, JSON.stringify(postedTitles, null, 2));
         console.log("📬 News sent to Telegram webhook!");
-        break; // ✅ Only send 1 relevant news per cycle
+        break;
       } else {
         console.log("❌ Not relevant, skipped.");
       }
@@ -64,8 +70,6 @@ async function fetchFXStreetRSS() {
   }
 }
 
-// ⏱ Run every 5 minutes
 cron.schedule('*/5 * * * *', fetchFXStreetRSS);
 fetchFXStreetRSS();
-
 console.log('🤖 RSS-based news alert bot is running...');
