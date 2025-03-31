@@ -1,8 +1,6 @@
-// server.js (Telegram + ChatGPT Webhook Processor)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const { getMarketMetrics } = require('./metrics');
 require('dotenv').config();
 
 const app = express();
@@ -12,16 +10,30 @@ const PORT = process.env.PORT || 3000;
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const METALPRICE_API_KEY = process.env.METALPRICE_API_KEY;
 
+// --- Helper to fetch gold price from MetalpriceAPI ---
+async function getGoldPrice() {
+  try {
+    const url = `https://api.metalpriceapi.com/v1/latest?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU`;
+    const response = await axios.get(url);
+    const rate = response.data?.rates?.XAU;
+    return rate ? 1 / rate : null;
+  } catch (err) {
+    console.error("❌ Failed to fetch gold price:", err.message);
+    return null;
+  }
+}
+
+// --- Helper to talk to ChatGPT ---
 async function analyzeWithChatGPT(newsText) {
-  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and how it might affect gold prices. Then summarize the tone and give a prediction for gold price movement (Bullish, Bearish, Neutral).\n\nNews:\n"""${newsText}"""\n\nRespond in this format:\nTone: <hawkish/dovish/neutral>\nPrediction: <Bullish/Bearish/Neutral>`;
-
+  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and its likely impact on gold prices (bullish/bearish/neutral):\n\n"""${newsText}"""\n\nRespond in this format:\nAnalysis: <Short analysis>\nPrediction: <Bullish/Bearish/Neutral>`;
   const response = await axios.post(
     'https://api.openai.com/v1/chat/completions',
     {
       model: 'gpt-4',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
+      temperature: 0.6,
     },
     {
       headers: {
@@ -30,48 +42,54 @@ async function analyzeWithChatGPT(newsText) {
       },
     }
   );
-
   return response.data.choices[0].message.content.trim();
 }
 
-function formatTelegramMessage(title, analysis, prediction, price) {
-  return `🗞 *High Impact News Triggered!*\n\n*Headline:* ${title}\n\n*Analysis:* Monetary Policy Tone: ${analysis}\n\n*Prediction:* Gold Price Movement Prediction: ${prediction}\n*Current Price:* $${price ? price.toFixed(2) : 'N/A'}`;
+// --- Format Telegram Message ---
+function formatTelegramMessage(title, summary, prediction, currentPrice) {
+  return `📰 *High Impact News Triggered!*\n
+*Headline:* ${title}
+
+*Analysis:* ${summary}
+
+*Prediction:* Gold Price Movement Prediction: ${prediction}
+*Current Price:* $${currentPrice ? currentPrice.toFixed(2) : 'N/A'}`;
 }
 
+// --- Telegram Sender ---
 async function sendToTelegram(message) {
-  const telegramURL = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  await axios.post(telegramURL, {
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  await axios.post(url, {
     chat_id: TELEGRAM_CHAT_ID,
     text: message,
     parse_mode: 'Markdown',
   });
 }
 
+// --- Webhook Endpoint ---
 app.post('/news', async (req, res) => {
   try {
     const { title, content } = req.body;
-    console.log(`📥 News received: ${title}`);
+    console.log(`📩 News received: ${title}`);
 
-    const analysisText = await analyzeWithChatGPT(content);
-    const [toneLine, predictionLine] = analysisText.split('\n');
-    const tone = toneLine?.split(':')[1]?.trim() || 'N/A';
-    const prediction = predictionLine?.split(':')[1]?.trim() || 'N/A';
+    const ai = await analyzeWithChatGPT(content);
+    const lines = ai.split('\n').filter(Boolean);
+    const summary = lines.find(line => line.toLowerCase().startsWith("analysis"))?.replace(/^Analysis:\s*/i, '') || 'N/A';
+    const prediction = lines.find(line => line.toLowerCase().startsWith("prediction"))?.replace(/^Prediction:\s*/i, '') || 'N/A';
 
-    const metrics = await getMarketMetrics();
-    const price = metrics.currentPrice;
+    const currentPrice = await getGoldPrice();
+    const msg = formatTelegramMessage(title, summary, prediction, currentPrice);
 
-    const message = formatTelegramMessage(title, tone, prediction, price);
-    await sendToTelegram(message);
-    console.log("📬 Sent to Telegram");
-    res.status(200).send('✅ Alert processed and sent to Telegram');
+    await sendToTelegram(msg);
+    res.status(200).send('✅ News alert sent');
   } catch (err) {
-    console.error('❌ Error processing /news alert:', err.message);
-    res.status(500).send('Error processing alert');
+    console.error('❌ Error in /news endpoint:', err.message);
+    res.status(500).send('Server error');
   }
 });
 
 app.get('/', (req, res) => {
-  res.send('🚀 Gold Alert Webhook is running!');
+  res.send('🚀 Gold Alert Bot is running');
 });
 
 app.listen(PORT, () => {
