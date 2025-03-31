@@ -11,11 +11,11 @@ async function getMarketMetrics() {
     const xauInUsd = rate ? 1 / rate : null;
 
     return {
-      ma50: null,           // Not available on MetalpriceAPI
-      ma200: null,          // Not available on MetalpriceAPI
-      rsi: null,            // Not available on MetalpriceAPI
+      ma50: null,             // Not available on MetalpriceAPI
+      ma200: null,            // Not available on MetalpriceAPI
+      rsi: null,              // Not available on MetalpriceAPI
       usdStrength: 'unknown', // Not provided
-      currentPrice: xauInUsd
+      currentPrice: xauInUsd ? parseFloat(xauInUsd.toFixed(2)) : null
     };
   } catch (err) {
     console.error("❌ Error fetching metrics:", err.message);
