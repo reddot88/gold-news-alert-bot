@@ -90,11 +90,11 @@ function formatTelegramMessage(title, analysis, prediction) {
     minute: '2-digit'
   });
 
-  return `📰 *Berita Penting Terdeteksi!*\n\n` +
-         `*📌 Judul Berita:*\n${title}\n\n` +
-         `*🧠 Analisa:*\n${analysis}\n\n` +
-         `*📊 Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
-         `*🕒 Waktu:*\n${waktu}`;
+  return `📰 *Berita Penting Terdeteksi\\!*` +
+         `\n\n📌 *Judul Berita:*\n${title}` +
+         `\n\n🧠 *Analisa:*\n${cleanAnalysis(analysis)}` +
+         `\n\n📊 *Prediksi Arah Harga Emas:*\n${prediction}` +
+         `\n\n🕒 *Waktu:*\n${waktu.replace(/\./g, '\\.').replace(/,/g, '')}`;
 }
 
 
@@ -103,6 +103,10 @@ function sanitizeMarkdown(text) {
   return text
     .replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&") // escape karakter markdown
     .slice(0, 4000); // batasi ke 4000 karakter
+}
+
+function cleanAnalysis(text) {
+  return text.replace(/Prediksi:\s*(Bullish|Bearish|Netral)/gi, '').trim();
 }
 
 // Send to Telegram
@@ -139,7 +143,6 @@ async function sendToTelegram(message) {
     parse_mode: 'MarkdownV2'
   });
 }
-
 
 
 // Webhook Endpoint
