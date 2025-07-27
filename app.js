@@ -49,14 +49,28 @@ async function fetchFXStreetRSS() {
 
 // ChatGPT Analysis
 async function analyzeWithChatGPT(newsText) {
-  const prompt = `Analyze the following news for its tone on monetary policy (hawkish/dovish/neutral) and how it might affect gold prices:\n\"\"\"${newsText}\"\"\"\nThen summarize in 2–3 bullet points.`;
+  const prompt = `
+Berikut adalah sebuah berita ekonomi:
+
+\"\"\"${newsText}\"\"\"
+
+1. Tolong analisa berita tersebut dalam *Bahasa Indonesia*, fokus pada nada kebijakan moneter (hawkish/dovish/netral) dan pengaruhnya terhadap harga emas.
+2. Berikan penjelasan singkat dalam 2–3 poin.
+3. Akhiri dengan satu baris prediksi arah harga emas, dalam format:
+Prediksi: Bullish / Bearish / Netral
+`;
+
   const response = await axios.post('https://api.openai.com/v1/chat/completions', {
     model: 'gpt-4',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7
   }, {
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' }
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
   });
+
   return response.data.choices[0].message.content.trim();
 }
 
@@ -66,10 +80,11 @@ async function getMovingAverages() {
 }
 
 // Format Telegram Message
-function formatTelegramMessage(title, analysis, mas) {
-  const structure = mas.currentPrice > mas.ma50 && mas.currentPrice > mas.ma200 ? '📈 Above both MAs (bullish)' : '📉 Below or between MAs';
-  return `📰 *High Impact News Triggered!*\n\n*Headline:* ${title}\n\n*Analysis:*\n${analysis}\n\n*MA Levels (XAU/USD):*\n- 50 MA: $${mas.ma50}\n- 200 MA: $${mas.ma200}\n- Current Price: $${mas.currentPrice}\n- Structure: ${structure}`;
+function formatTelegramMessage(title, analysis, prediction) {
+  const waktu = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+  return `📰 *Berita Penting Terdeteksi!*\n\n*Judul:* ${title}\n\n*Analisa:*\n${analysis}\n\n📊 *Prediksi Arah Harga Emas:* ${prediction}\n\n🕒 *Waktu:* ${waktu}`;
 }
+
 
 // Send to Telegram
 async function sendToTelegram(message) {
@@ -88,8 +103,13 @@ app.post('/news', async (req, res) => {
     console.log(`📥 News received: ${title}`);
 
     const analysis = await analyzeWithChatGPT(content);
-    const mas = await getMovingAverages();
-    const message = formatTelegramMessage(title, analysis, mas);
+
+    // Ekstrak prediksi dari analisa
+    let prediction = 'Netral';
+    if (analysis.toLowerCase().includes('bullish')) prediction = 'Bullish';
+    else if (analysis.toLowerCase().includes('bearish')) prediction = 'Bearish';
+
+    const message = formatTelegramMessage(title, analysis, prediction);
 
     await sendToTelegram(message);
     console.log("📬 Sent to Telegram");
