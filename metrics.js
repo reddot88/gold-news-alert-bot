@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require("axios");
 
-const METALPRICE_API_KEY = process.env.METALPRICE_API_KEY;
+const METALPRICE_API_KEY = process.env.METALS_API_KEY;
 
 async function getMarketMetrics() {
   try {
