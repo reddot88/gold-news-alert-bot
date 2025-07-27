@@ -103,11 +103,10 @@ app.post('/news', async (req, res) => {
     console.log(`📥 News received: ${title}`);
 
     const analysis = await analyzeWithChatGPT(content);
+    console.log("✅ AI Analysis:\n", analysis);
 
-    // Ekstrak prediksi dari analisa
-    let prediction = 'Netral';
-    if (analysis.toLowerCase().includes('bullish')) prediction = 'Bullish';
-    else if (analysis.toLowerCase().includes('bearish')) prediction = 'Bearish';
+    const match = analysis.match(/Prediksi:\s*(Bullish|Bearish|Netral)/i);
+    const prediction = match ? match[1] : 'Netral';
 
     const message = formatTelegramMessage(title, analysis, prediction);
 
@@ -119,6 +118,7 @@ app.post('/news', async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 // Start Server + Cron
 app.listen(PORT, () => {
