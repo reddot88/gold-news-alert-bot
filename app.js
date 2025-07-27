@@ -161,11 +161,9 @@ app.post('/news', async (req, res) => {
 
     const market = await getMarketMetrics();
     const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
+    console.log("🧾 Metrics:", market);
 
-    const metrics = await getMarketMetrics();
-    console.log("🧾 Metrics:", metrics);
-
-    const message = formatTelegramMessage(title, analysis, prediction, metrics);
+    const message = formatTelegramMessage(title, analysis, prediction, hargaEmas);
 
     await sendToTelegram(message);
     console.log("📬 Sent to Telegram");
