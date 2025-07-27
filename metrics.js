@@ -8,7 +8,8 @@ async function getMarketMetrics() {
     const url = `https://api.metalpriceapi.com/v1/latest?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU`;
     const response = await axios.get(url);
 
-    console.log("📦 Response MetalpriceAPI:", response.data); // <--- Tambahan debug
+    console.log("📦 Response MetalpriceAPI:", response.data);
+    console.log("🔑 API Key Loaded:", METALPRICE_API_KEY);
 
     const rate = response.data?.rates?.XAU;
     const timestamp = response.data?.timestamp;
