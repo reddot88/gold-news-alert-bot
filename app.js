@@ -85,13 +85,21 @@ function formatTelegramMessage(title, analysis, prediction) {
   return `📰 *Berita Penting Terdeteksi!*\n\n*Judul:* ${title}\n\n*Analisa:*\n${analysis}\n\n📊 *Prediksi Arah Harga Emas:* ${prediction}\n\n🕒 *Waktu:* ${waktu}`;
 }
 
+// Sanitasi message
+function sanitizeMarkdown(text) {
+  return text
+    .replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&") // escape karakter markdown
+    .slice(0, 4000); // batasi ke 4000 karakter
+}
 
 // Send to Telegram
 async function sendToTelegram(message) {
+  const sanitized = sanitizeMarkdown(message);
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
   await axios.post(url, {
     chat_id: TELEGRAM_CHAT_ID,
-    text: message,
+    text: sanitized,
     parse_mode: 'Markdown'
   });
 }
