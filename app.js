@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
+const { getMarketMetrics } = require('./metrics');
 require('dotenv').config();
 
 const app = express();
@@ -61,7 +62,7 @@ Prediksi: Bullish / Bearish / Netral
 `;
 
   const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-    model: 'gpt-4',
+    model: 'gpt-4o',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7
   }, {
@@ -80,7 +81,7 @@ async function getMovingAverages() {
 }
 
 // Format Telegram Message
-function formatTelegramMessage(title, analysis, prediction) {
+function formatTelegramMessage(title, analysis, prediction, metrics) {
   const waktu = new Date().toLocaleString('id-ID', {
     timeZone: 'Asia/Jakarta',
     day: 'numeric',
@@ -90,11 +91,16 @@ function formatTelegramMessage(title, analysis, prediction) {
     minute: '2-digit'
   });
 
+  const hargaInfo = metrics.currentPrice
+    ? `💰 *Harga Emas (XAU/USD):* $${metrics.currentPrice}\n⏱️ *Update Harga:* ${metrics.updatedAt}`
+    : `💰 *Harga Emas:* Tidak tersedia`;
+
   return `📰 *Berita Penting Terdeteksi!*\n\n` +
          `📌 *Judul Berita:*\n${title}\n\n` +
          `🧠 *Analisa:*\n${cleanAnalysis(analysis)}\n\n` +
          `📊 *Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
-         `🕒 *Waktu:*\n${waktu}`;
+         `${hargaInfo}\n\n` +
+         `🕒 *Waktu:* ${waktu}`;
 }
 
 
@@ -152,15 +158,12 @@ async function sendToTelegram(message) {
 app.post('/news', async (req, res) => {
   try {
     const { title, content } = req.body;
-    console.log(`📥 News received: ${title}`);
-
     const analysis = await analyzeWithChatGPT(content);
-    console.log("✅ AI Analysis:\n", analysis);
-
     const match = analysis.match(/Prediksi:\s*(Bullish|Bearish|Netral)/i);
     const prediction = match ? match[1] : 'Netral';
 
-    const message = formatTelegramMessage(title, analysis, prediction);
+    const metrics = await getMarketMetrics(); // Ambil harga & waktu update
+    const message = formatTelegramMessage(title, analysis, prediction, metrics);
 
     await sendToTelegram(message);
     console.log("📬 Sent to Telegram");
