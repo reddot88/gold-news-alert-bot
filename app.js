@@ -81,14 +81,22 @@ async function getMovingAverages() {
 
 // Format Telegram Message
 function formatTelegramMessage(title, analysis, prediction) {
-  const waktu = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+  const waktu = new Date().toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
-  return `📰 *Berita Penting Terdeteksi\\!*` +
-         `\n\n*Judul Berita*\n${title}` +
-         `\n\n*Analisa*\n${analysis}` +
-         `\n\n*Prediksi*\n${prediction}` +
-         `\n\n*Waktu*\n${waktu}`;
+  return `📰 *Berita Penting Terdeteksi!*\n\n` +
+         `*📌 Judul Berita:*\n${title}\n\n` +
+         `*🧠 Analisa:*\n${analysis}\n\n` +
+         `*📊 Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
+         `*🕒 Waktu:*\n${waktu}`;
 }
+
 
 // Sanitasi message
 function sanitizeMarkdown(text) {
