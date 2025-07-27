@@ -6,8 +6,6 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
 const { getMarketMetrics } = require('./metrics');
-const market = await getMarketMetrics();
-const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
 
 require('dotenv').config();
 
@@ -165,6 +163,9 @@ app.post('/news', async (req, res) => {
     const analysis = await analyzeWithChatGPT(content);
     const match = analysis.match(/Prediksi:\s*(Bullish|Bearish|Netral)/i);
     const prediction = match ? match[1] : 'Netral';
+
+    const market = await getMarketMetrics();
+    const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
 
     const metrics = await getMarketMetrics();
     console.log("🧾 Metrics:", metrics);
