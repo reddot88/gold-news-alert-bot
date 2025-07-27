@@ -90,11 +90,11 @@ function formatTelegramMessage(title, analysis, prediction) {
     minute: '2-digit'
   });
 
-  return `📰 **Berita Penting Terdeteksi!**` +
-         `\n\n📌 **Judul Berita:**\n${title}` +
-         `\n\n🧠 **Analisa:**\n${cleanAnalysis(analysis)}` +
-         `\n\n📊 **Prediksi Arah Harga Emas:**\n${prediction}` +
-         `\n\n🕒 **Waktu:**\n${waktu.replace(/\./g, '\\.').replace(/,/g, '')}`;
+  return `📰 *Berita Penting Terdeteksi!*\n\n` +
+         `📌 *Judul Berita:*\n${title}\n\n` +
+         `🧠 *Analisa:*\n${cleanAnalysis(analysis)}\n\n` +
+         `📊 *Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
+         `🕒 *Waktu:*\n${waktu}`;
 }
 
 
