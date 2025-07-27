@@ -20,6 +20,9 @@ const WEBHOOK_URL = `http://localhost:${PORT}/news`; // Local call to internal w
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
 let lastPostedTitle = '';
 
+const market = await getMarketMetrics();
+const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
+
 // News Scraper (RSS + Keyword Filter)
 async function fetchFXStreetRSS() {
   try {
@@ -99,6 +102,7 @@ function formatTelegramMessage(title, analysis, prediction, metrics) {
          `📌 *Judul Berita:*\n${title}\n\n` +
          `🧠 *Analisa:*\n${cleanAnalysis(analysis)}\n\n` +
          `📊 *Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
+         `💰 *Harga Emas:*\n${hargaEmas}\n\n` +
          `${hargaInfo}\n\n` +
          `🕒 *Waktu:* ${waktu}`;
 }
