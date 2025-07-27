@@ -82,7 +82,7 @@ async function getMovingAverages() {
 }
 
 // Format Telegram Message
-function formatTelegramMessage(title, analysis, prediction, metrics) {
+function formatTelegramMessage(title, analysis, prediction, hargaEmas) {
   const waktu = new Date().toLocaleString('id-ID', {
     timeZone: 'Asia/Jakarta',
     day: 'numeric',
@@ -92,17 +92,12 @@ function formatTelegramMessage(title, analysis, prediction, metrics) {
     minute: '2-digit'
   });
 
-  const hargaInfo = metrics.currentPrice
-    ? `💰 *Harga Emas (XAU/USD):* $${metrics.currentPrice}\n⏱️ *Update Harga:* ${metrics.updatedAt}`
-    : `💰 *Harga Emas:* Tidak tersedia`;
-
   return `📰 *Berita Penting Terdeteksi!*\n\n` +
          `📌 *Judul Berita:*\n${title}\n\n` +
          `🧠 *Analisa:*\n${cleanAnalysis(analysis)}\n\n` +
          `📊 *Prediksi Arah Harga Emas:*\n${prediction}\n\n` +
-         `💰 *Harga Emas:*\n${hargaEmas}\n\n` +
-         `${hargaInfo}\n\n` +
-         `🕒 *Waktu:* ${waktu}`;
+         `💰 *Harga Emas:* ${hargaEmas}\n\n` +
+         `🕒 *Waktu:*\n${waktu}`;
 }
 
 
