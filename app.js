@@ -106,8 +106,12 @@ function sanitizeMarkdown(text) {
 }
 
 function cleanAnalysis(text) {
-  return text.replace(/Prediksi:\s*(Bullish|Bearish|Netral)/gi, '').trim();
+  return text
+    .replace(/3\.\s*Prediksi:.*$/gi, '')  // hapus baris prediksi yang diawali dengan "3. Prediksi:"
+    .replace(/Prediksi:\s*(Bullish|Bearish|Netral)/gi, '') // hapus sisipan prediksi apapun
+    .trim();
 }
+
 
 // Send to Telegram
 function escapeMarkdownV2(text) {
@@ -134,13 +138,12 @@ function escapeMarkdownV2(text) {
 }
 
 async function sendToTelegram(message) {
-  const escaped = escapeMarkdownV2(message).slice(0, 4000);
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
   await axios.post(url, {
     chat_id: TELEGRAM_CHAT_ID,
-    text: escaped,
-    parse_mode: 'MarkdownV2'
+    text: message,
+    parse_mode: 'Markdown' // ✅ Ganti dari 'MarkdownV2'
   });
 }
 
