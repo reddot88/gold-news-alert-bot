@@ -1,6 +1,18 @@
-// metrics.js (using MetalpriceAPI)
+// metrics.js
 const axios = require("axios");
 const METALPRICE_API_KEY = process.env.METALPRICE_API_KEY;
+
+function formatTimestamp(unixTimestamp) {
+  const date = new Date(unixTimestamp * 1000);
+  return date.toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 async function getMarketMetrics() {
   try {
@@ -8,27 +20,19 @@ async function getMarketMetrics() {
     const response = await axios.get(url);
 
     const rate = response.data?.rates?.XAU;
-    const xauInUsd = rate ? 1 / rate : null;
     const timestamp = response.data?.timestamp;
 
-    const updatedAt = timestamp
-      ? new Date(timestamp * 1000).toLocaleString('id-ID', {
-          timeZone: 'Asia/Jakarta',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      : 'Tidak tersedia';
+    if (!rate || !timestamp) throw new Error("❌ Data tidak lengkap dari MetalpriceAPI");
+
+    const xauInUsd = 1 / rate;
 
     return {
-      ma50: null,             // Not available on MetalpriceAPI
-      ma200: null,            // Not available on MetalpriceAPI
-      rsi: null,              // Not available on MetalpriceAPI
-      usdStrength: 'unknown', // Not provided
-      currentPrice: xauInUsd ? parseFloat(xauInUsd.toFixed(2)) : null,
-      updatedAt               // ✅ baru ditambahkan
+      ma50: null,
+      ma200: null,
+      rsi: null,
+      usdStrength: 'unknown',
+      currentPrice: parseFloat(xauInUsd.toFixed(2)),
+      updatedAt: formatTimestamp(timestamp)
     };
   } catch (err) {
     console.error("❌ Error fetching metrics:", err.message);
@@ -38,7 +42,7 @@ async function getMarketMetrics() {
       rsi: null,
       usdStrength: 'unknown',
       currentPrice: null,
-      updatedAt: 'Tidak tersedia'
+      updatedAt: null
     };
   }
 }
