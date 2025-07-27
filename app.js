@@ -83,9 +83,12 @@ async function getMovingAverages() {
 function formatTelegramMessage(title, analysis, prediction) {
   const waktu = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 
-  return `📰 *Berita Penting Terdeteksi!*\n\n*Judul*\n${title}\n\n*Analisa*\n${analysis}\n\n*Prediksi Arah Harga Emas*\n${prediction}\n\n*Waktu*\n${waktu}`;
+  return `📰 *Berita Penting Terdeteksi\\!*` +
+         `\n\n*Judul Berita*\n${title}` +
+         `\n\n*Analisa*\n${analysis}` +
+         `\n\n*Prediksi*\n${prediction}` +
+         `\n\n*Waktu*\n${waktu}`;
 }
-
 
 // Sanitasi message
 function sanitizeMarkdown(text) {
@@ -97,11 +100,29 @@ function sanitizeMarkdown(text) {
 // Send to Telegram
 function escapeMarkdownV2(text) {
   return text
-    .replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&'); // escape karakter khusus
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '\\*')
+    .replace(/_/g, '\\_')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/~/g, '\\~')
+    .replace(/`/g, '\\`')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#')
+    .replace(/\+/g, '\\+')
+    .replace(/-/g, '\\-')
+    .replace(/=/g, '\\=')
+    .replace(/\|/g, '\\|')
+    .replace(/{/g, '\\{')
+    .replace(/}/g, '\\}')
+    .replace(/\./g, '\\.')
+    .replace(/!/g, '\\!');
 }
 
 async function sendToTelegram(message) {
-  const escaped = escapeMarkdownV2(message).slice(0, 4000); // max aman
+  const escaped = escapeMarkdownV2(message).slice(0, 4000);
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
   await axios.post(url, {
@@ -110,6 +131,7 @@ async function sendToTelegram(message) {
     parse_mode: 'MarkdownV2'
   });
 }
+
 
 
 // Webhook Endpoint
