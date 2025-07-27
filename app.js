@@ -6,6 +6,9 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
 const { getMarketMetrics } = require('./metrics');
+const market = await getMarketMetrics();
+const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
+
 require('dotenv').config();
 
 const app = express();
@@ -94,9 +97,6 @@ function formatTelegramMessage(title, analysis, prediction, metrics) {
   const hargaInfo = metrics.currentPrice
     ? `💰 *Harga Emas (XAU/USD):* $${metrics.currentPrice}\n⏱️ *Update Harga:* ${metrics.updatedAt}`
     : `💰 *Harga Emas:* Tidak tersedia`;
-
-  const market = await getMarketMetrics();
-  const hargaEmas = market.currentPrice ? `\$${market.currentPrice} (update: ${market.updatedAt})` : 'Tidak tersedia';
 
   return `📰 *Berita Penting Terdeteksi!*\n\n` +
          `📌 *Judul Berita:*\n${title}\n\n` +
