@@ -82,8 +82,10 @@ async function getMovingAverages() {
 // Format Telegram Message
 function formatTelegramMessage(title, analysis, prediction) {
   const waktu = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-  return `📰 *Berita Penting Terdeteksi!*\n\n*Judul:* ${title}\n\n*Analisa:*\n${analysis}\n\n📊 *Prediksi Arah Harga Emas:* ${prediction}\n\n🕒 *Waktu:* ${waktu}`;
+
+  return `📰 *Berita Penting Terdeteksi!*\n\n*Judul*\n${title}\n\n*Analisa*\n${analysis}\n\n*Prediksi Arah Harga Emas*\n${prediction}\n\n*Waktu*\n${waktu}`;
 }
+
 
 // Sanitasi message
 function sanitizeMarkdown(text) {
@@ -93,16 +95,22 @@ function sanitizeMarkdown(text) {
 }
 
 // Send to Telegram
+function escapeMarkdownV2(text) {
+  return text
+    .replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&'); // escape karakter khusus
+}
+
 async function sendToTelegram(message) {
-  const sanitized = sanitizeMarkdown(message);
+  const escaped = escapeMarkdownV2(message).slice(0, 4000); // max aman
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
   await axios.post(url, {
     chat_id: TELEGRAM_CHAT_ID,
-    text: sanitized,
-    parse_mode: 'Markdown'
+    text: escaped,
+    parse_mode: 'MarkdownV2'
   });
 }
+
 
 // Webhook Endpoint
 app.post('/news', async (req, res) => {
