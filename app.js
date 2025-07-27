@@ -162,7 +162,9 @@ app.post('/news', async (req, res) => {
     const match = analysis.match(/Prediksi:\s*(Bullish|Bearish|Netral)/i);
     const prediction = match ? match[1] : 'Netral';
 
-    const metrics = await getMarketMetrics(); // Ambil harga & waktu update
+    const metrics = await getMarketMetrics();
+    console.log("🧾 Metrics:", metrics);
+
     const message = formatTelegramMessage(title, analysis, prediction, metrics);
 
     await sendToTelegram(message);
