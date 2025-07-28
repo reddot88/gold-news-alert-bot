@@ -32,6 +32,52 @@ if (fs.existsSync(cacheFile)) {
   lastPostedTitle = json.title || "";
 }
 
+// Load title on startup
+if (fs.existsSync(cacheFile)) {
+  const json = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+  lastPostedTitle = json.title || '';
+}
+
+async function fetchDailyForexRSS() {
+  try {
+    console.log('🟡 fetchDailyForexRSS() triggered!');
+    const { data } = await axios.get('https://www.dailyforex.com/rss/technicalanalysis.xml');
+    const parsed = await xml2js.parseStringPromise(data);
+    const items = parsed.rss.channel[0].item;
+    if (!items || items.length === 0) return;
+
+    const topItems = items.slice(0, 5); // you can increase if needed
+
+    for (const item of topItems) {
+      const title = item.title[0];
+      const content = item.description[0];
+
+      if (!title || title === lastPostedTitle) {
+        console.log('⏭️ News already sent previously:', title);
+        continue;
+      }
+
+      const isRelevant = KEYWORDS.some(keyword =>
+        (title + content).toLowerCase().includes(keyword)
+      );
+
+      if (isRelevant) {
+        await axios.post(WEBHOOK_URL, { title, content });
+
+        // Simpan judul ke file agar tidak kirim ulang
+        fs.writeFileSync(cacheFile, JSON.stringify({ title }), 'utf-8');
+        lastPostedTitle = title;
+
+        console.log('📬 News matched & sent to internal webhook:', title);
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('❌ RSS scrape error:', err.message);
+  }
+}
+
+module.exports = { fetchDailyForexRSS };
 
 // News Scraper (RSS + Keyword Filter)
 async function fetchFXStreetRSS() {
@@ -202,6 +248,6 @@ app.post('/news', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
   fetchFXStreetRSS();
-  cron.schedule('*/15 * * * *', fetchFXStreetRSS);
+  cron.schedule('*/15 * * * *', fetchDailyForexRSS);
   console.log("🤖 RSS bot scheduler initialized.");
 });
