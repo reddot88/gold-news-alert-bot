@@ -6,6 +6,7 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const cron = require('node-cron');
 const { getMarketMetrics } = require('./metrics');
+const TelegramBot = require('node-telegram-bot-api');
 
 require('dotenv').config();
 
@@ -25,6 +26,7 @@ const openai = new OpenAIApi(new Configuration({
   apiKey: process.env.OPENAI_API_KEY
 }));
 
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
