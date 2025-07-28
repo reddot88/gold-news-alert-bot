@@ -18,6 +18,50 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const WEBHOOK_URL = `http://localhost:${PORT}/news`; // Local call to internal webhook
 
+const cheerio = require('cheerio'); // Untuk ambil konten dari halaman berita
+const { Configuration, OpenAIApi } = require("openai");
+
+const openai = new OpenAIApi(new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+}));
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text;
+
+  // Cek apakah pesan adalah link berita
+  if (text && text.startsWith('http')) {
+    try {
+      await bot.sendMessage(chatId, "🔍 Membaca isi berita...");
+
+      const { data: html } = await axios.get(text);
+      const $ = cheerio.load(html);
+
+      // Ambil title & isi utama halaman
+      const title = $('title').text();
+      const content = $('p').map((i, el) => $(el).text()).get().join('\n');
+      const prompt = `Berikut adalah isi berita:\n\nJudul: ${title}\n\nIsi:\n${content}\n\nBerikan analisis dampaknya terhadap harga emas (XAU/USD), apakah bersifat bullish atau bearish terhadap USD dan XAU?`;
+
+      const gptRes = await openai.createChatCompletion({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "You are an expert macroeconomic and gold analyst. Analyze the news based on its impact on USD and XAU/USD." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      });
+
+      const analysis = gptRes.data.choices[0].message.content;
+      await bot.sendMessage(chatId, `✅ Analisis selesai:\n\n${analysis}`);
+    } catch (err) {
+      console.error("❌ Error saat analisa berita:", err.message);
+      await bot.sendMessage(chatId, "⚠️ Gagal membaca atau menganalisa berita. Pastikan link valid.");
+    }
+  }
+});
+
+
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
 
 const fs = require('fs');
