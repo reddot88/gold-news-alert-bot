@@ -63,6 +63,29 @@ bot.on('message', async (msg) => {
   }
 });
 
+const puppeteer = require('puppeteer');
+
+async function scrapeInvestingArticle(url) {
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+
+  await page.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36'
+  );
+
+  await page.goto(url, { waitUntil: 'networkidle2' });
+
+  const result = await page.evaluate(() => {
+    const title = document.querySelector('h1')?.innerText;
+    const content = Array.from(document.querySelectorAll('div.WYSIWYG.articlePage > p'))
+                         .map(p => p.innerText)
+                         .join('\n\n');
+    return { title, content };
+  });
+
+  await browser.close();
+  return result;
+}
 
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
 
