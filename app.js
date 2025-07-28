@@ -80,7 +80,7 @@ Berikut adalah sebuah berita ekonomi:
 \"\"\"${newsText}\"\"\"
 
 1. Tolong analisa berita tersebut dalam *Bahasa Indonesia*, fokus pada nada kebijakan moneter (hawkish/dovish/netral) dan pengaruhnya terhadap harga emas.
-2. Berikan penjelasan singkat dalam 2–3 poin.
+2. Berikan penjelasan singkat dalam 2 poin.
 3. Akhiri dengan satu baris prediksi arah harga emas, dalam format:
 Prediksi: Bullish / Bearish / Netral
 `;
