@@ -19,7 +19,19 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const WEBHOOK_URL = `http://localhost:${PORT}/news`; // Local call to internal webhook
 
 const KEYWORDS = ['gold', 'fed', 'cpi', 'inflation', 'interest', 'fomc', 'powell'];
-let lastPostedTitle = '';
+
+const fs = require('fs');
+const path = require('path');
+const cacheFile = path.join(__dirname, 'last-news.json');
+
+let lastPostedTitle = "";
+
+// Load title saat startup
+if (fs.existsSync(cacheFile)) {
+  const json = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+  lastPostedTitle = json.title || "";
+}
+
 
 // News Scraper (RSS + Keyword Filter)
 async function fetchFXStreetRSS() {
@@ -34,12 +46,23 @@ async function fetchFXStreetRSS() {
     for (const item of topItems) {
       const title = item.title[0];
       const content = item.description[0];
-      if (!title || title === lastPostedTitle) continue;
 
-      const isRelevant = KEYWORDS.some(keyword => (title + content).toLowerCase().includes(keyword));
+      if (!title || title === lastPostedTitle) {
+        console.log("⏭️ News already sent previously:", title);
+        continue;
+      }
+
+      const isRelevant = KEYWORDS.some(keyword =>
+        (title + content).toLowerCase().includes(keyword)
+      );
+
       if (isRelevant) {
         await axios.post(WEBHOOK_URL, { title, content });
+
+        // Simpan ke file
+        fs.writeFileSync(cacheFile, JSON.stringify({ title }), 'utf-8');
         lastPostedTitle = title;
+
         console.log("📬 News matched & sent to internal webhook.");
         break;
       }
