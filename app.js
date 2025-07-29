@@ -316,7 +316,7 @@ app.post('/news', async (req, res) => {
 // Start Server + Cron
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
-  fetchDailyForexRSS();
-  cron.schedule('*/15 * * * *', fetchDailyForexRSS);
+  fetchFXStreetRSS();
+  cron.schedule('*/15 * * * *', fetchFXStreetRSS);
   console.log("🤖 RSS bot scheduler initialized.");
 });
