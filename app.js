@@ -194,10 +194,7 @@ Berikut adalah sebuah berita ekonomi:
 
 \"\"\"${newsText}\"\"\"
 
-1. Tolong analisa berita tersebut dalam *Bahasa Indonesia*, fokus pada nada kebijakan moneter (hawkish/dovish/netral) dan pengaruhnya terhadap harga emas secara singkat.
-2. Berikan satu baris prediksi arah harga emas, dalam format:
-Prediksi: Bullish / Bearish / Netral
-3. Akhiri dengan  penjelasan singkat dalam 1 poin terkait dengan berita pada poin nomor 1.
+Analisa berita tersebut dalam *Bahasa Indonesia*, fokus pada nada kebijakan moneter (hawkish/dovish/netral) dan pengaruhnya terhadap harga emas secara singkat dalam 1 kalimat.
 `;
 
   const response = await axios.post('https://api.openai.com/v1/chat/completions', {
